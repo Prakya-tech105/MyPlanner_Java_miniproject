@@ -1,0 +1,7 @@
+{
+  "name": "Copy of MyPlanner",
+  "description": "A world-class task manager with AI-powered voice input, text-to-speech, and advanced analytics.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
