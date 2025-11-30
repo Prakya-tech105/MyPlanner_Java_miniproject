@@ -93,7 +93,8 @@ export class GeminiService {
     const result = await model.generateContent({
       model: 'gemini-2.5-flash', // Using flash for speed/cost
       contents: `Extract task details from the following text: "${text}". 
-                 If the date is relative (e.g. tomorrow), calculate the ISO date assuming today is ${new Date().toISOString()}.`,
+                 If the date is relative (e.g. tomorrow), calculate the ISO date assuming today is ${new Date().toISOString()}.
+                 If start time or end time is mentioned (e.g. "at 2pm", "from 10 to 11"), extract them in "HH:mm" 24-hour format.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -102,6 +103,8 @@ export class GeminiService {
             title: { type: Type.STRING },
             description: { type: Type.STRING },
             dueDate: { type: Type.STRING, description: "ISO 8601 date string" },
+            startTime: { type: Type.STRING, description: "Start time in HH:mm format" },
+            endTime: { type: Type.STRING, description: "End time in HH:mm format" },
             priority: { type: Type.STRING, enum: [Priority.LOW, Priority.MEDIUM, Priority.HIGH, Priority.URGENT] },
             category: { type: Type.STRING },
             tags: { type: Type.ARRAY, items: { type: Type.STRING } },

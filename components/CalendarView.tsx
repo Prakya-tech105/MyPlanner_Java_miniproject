@@ -112,8 +112,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
         title={`${task.title} (${task.category})`}
       >
         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getCategoryColor(task.category)}`}></span>
-        <div className="min-w-0">
-          <div className="truncate font-semibold">{task.title}</div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-semibold flex gap-2">
+            {task.startTime && <span className="opacity-80 font-normal">{task.startTime}</span>}
+            {task.title}
+          </div>
           {showDetails && task.description && (
              <div className="opacity-75 truncate text-[10px]">{task.description}</div>
           )}
@@ -124,7 +127,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
 
   // 1. DAY VIEW
   const renderDayView = () => {
-    const tasksForDay = getTasksForDate(currentDate);
+    // Sort tasks by startTime if available
+    const tasksForDay = getTasksForDate(currentDate).sort((a, b) => {
+        if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+        return 0;
+    });
     const isToday = isSameDate(new Date(), currentDate);
 
     return (
@@ -139,7 +146,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
                   {DAYS[currentDate.getDay()]}
                 </h3>
                 <p className="text-lg text-gray-500 dark:text-gray-400">
-                  {currentDate.getDate()} {MONTHS[currentDate.getMonth()]}
+                  {currentDate.toLocaleDateString('en-GB')}
                 </p>
               </div>
               <button 
@@ -183,7 +190,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
       <div className="flex-1 grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 overflow-hidden">
         {weekDays.map((date, idx) => {
           const isToday = isSameDate(new Date(), date);
-          const dayTasks = getTasksForDate(date);
+          const dayTasks = getTasksForDate(date).sort((a, b) => {
+             if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+             return 0;
+          });
           
           return (
             <div 
@@ -246,7 +256,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
       const isToday = isSameDate(new Date(), date);
-      const daysTasks = getTasksForDate(date);
+      const daysTasks = getTasksForDate(date).sort((a, b) => {
+         // Sort by start time for visual order
+         if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+         return 0;
+      });
 
       cells.push(
         <div 
@@ -386,6 +400,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
                     const [y, m, d] = dateStr.split('-').map(Number);
                     const displayDate = new Date(y, m-1, d); 
                     const isPast = displayDate < today;
+                    
+                    // Sort tasks within this date group by start time
+                    const sortedDayTasks = grouped[dateStr].sort((a, b) => {
+                       if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+                       return 0;
+                    });
 
                     return (
                         <div key={dateStr} className={`relative pl-8 ${isPast ? 'opacity-60' : ''}`}>
@@ -395,11 +415,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
                             
                             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
                                 <h4 className="font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-                                    {displayDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                                    {displayDate.toLocaleDateString('en-GB', { weekday: 'long' })}, {displayDate.toLocaleDateString('en-GB')}
                                     {isSameDate(displayDate, new Date()) && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Today</span>}
                                 </h4>
                                 <div className="space-y-2">
-                                    {grouped[dateStr].map(task => renderTaskChip(task, true))}
+                                    {sortedDayTasks.map(task => renderTaskChip(task, true))}
                                 </div>
                             </div>
                         </div>
@@ -424,7 +444,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, categories, o
             <Clock className="text-indigo-500 hidden md:block" />
             <span className="truncate">
                 {viewMode === 'Year' ? currentDate.getFullYear() : 
-                 viewMode === 'Day' ? currentDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric'}) :
+                 viewMode === 'Day' ? currentDate.toLocaleDateString('en-GB') :
                  `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
             </span>
             </h2>

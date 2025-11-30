@@ -85,6 +85,8 @@ function App() {
   const [formPriority, setFormPriority] = useState<Priority>(Priority.MEDIUM);
   const [formCategory, setFormCategory] = useState(INITIAL_CATEGORIES[0].name);
   const [formDueDate, setFormDueDate] = useState('');
+  const [formStartTime, setFormStartTime] = useState('');
+  const [formEndTime, setFormEndTime] = useState('');
 
   // Effects
   useEffect(() => {
@@ -145,6 +147,8 @@ function App() {
       recurrence: newTask.recurrence || Recurrence.NONE,
       createdAt: Date.now(),
       dueDate: newTask.dueDate || '',
+      startTime: newTask.startTime,
+      endTime: newTask.endTime
     };
     setTasks(prev => [task, ...prev]);
   };
@@ -214,6 +218,8 @@ function App() {
         setFormPriority(task.priority);
         setFormCategory(task.category);
         setFormDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
+        setFormStartTime(task.startTime || '');
+        setFormEndTime(task.endTime || '');
     } else {
         setEditingTask(null);
         setFormTitle('');
@@ -221,6 +227,8 @@ function App() {
         setFormPriority(Priority.MEDIUM);
         setFormCategory(categories[0]?.name || 'Work');
         setFormDueDate(prefillDate ? prefillDate.toISOString().split('T')[0] : '');
+        setFormStartTime('');
+        setFormEndTime('');
     }
     setIsModalOpen(true);
   };
@@ -464,7 +472,15 @@ function App() {
                                                 {task.dueDate && (
                                                     <span className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== TaskStatus.DONE ? 'text-red-500' : ''}`}>
                                                         <CalendarIcon size={12} />
-                                                        {new Date(task.dueDate).toLocaleDateString()}
+                                                        {new Date(task.dueDate).toLocaleDateString('en-GB')}
+                                                        {task.startTime && <span className="ml-1 text-gray-400">|</span>}
+                                                        {task.startTime && (
+                                                            <span className="ml-1 flex items-center gap-1 font-medium">
+                                                                <Clock size={12} />
+                                                                {task.startTime} 
+                                                                {task.endTime && ` - ${task.endTime}`}
+                                                            </span>
+                                                        )}
                                                     </span>
                                                 )}
                                                 <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-white ${category?.color || 'bg-gray-400'}`}>
@@ -555,6 +571,29 @@ function App() {
                                 </select>
                             </div>
                         </div>
+
+                        {/* Time Blocking */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Time</label>
+                                <input 
+                                    type="time" 
+                                    value={formStartTime}
+                                    onChange={(e) => setFormStartTime(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Time</label>
+                                <input 
+                                    type="time" 
+                                    value={formEndTime}
+                                    onChange={(e) => setFormEndTime(e.target.value)}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
+
                         <div>
                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                              <div className="flex gap-2">
@@ -585,23 +624,20 @@ function App() {
                         <button 
                             onClick={() => {
                                 if (!formTitle.trim()) return;
+                                const taskData = {
+                                    title: formTitle,
+                                    description: formDesc,
+                                    priority: formPriority,
+                                    category: formCategory,
+                                    dueDate: formDueDate ? new Date(formDueDate).toISOString() : undefined,
+                                    startTime: formStartTime,
+                                    endTime: formEndTime
+                                };
+                                
                                 if (editingTask) {
-                                    handleUpdateTask({
-                                        ...editingTask,
-                                        title: formTitle,
-                                        description: formDesc,
-                                        priority: formPriority,
-                                        category: formCategory,
-                                        dueDate: formDueDate ? new Date(formDueDate).toISOString() : undefined
-                                    });
+                                    handleUpdateTask({ ...editingTask, ...taskData });
                                 } else {
-                                    handleAddTask({
-                                        title: formTitle,
-                                        description: formDesc,
-                                        priority: formPriority,
-                                        category: formCategory,
-                                        dueDate: formDueDate ? new Date(formDueDate).toISOString() : undefined
-                                    });
+                                    handleAddTask(taskData);
                                 }
                                 setIsModalOpen(false);
                             }}

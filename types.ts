@@ -23,6 +23,8 @@ export interface Task {
   title: string;
   description?: string;
   dueDate?: string; // ISO string
+  startTime?: string; // "HH:mm"
+  endTime?: string; // "HH:mm"
   priority: Priority;
   status: TaskStatus;
   category: string;
